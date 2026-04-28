@@ -634,6 +634,7 @@ pub const Window = opaque {
     pub const create = createWindow;
     pub const destroy = destroyWindow;
     pub const getFullscreenMode = getWindowFullscreenMode;
+    pub const getDisplayScale = getWindowDisplayScale;
     pub const getPosition = getWindowPosition;
     pub const getSize = getWindowSize;
     pub const setTitle = setWindowTitle;
@@ -661,6 +662,13 @@ extern fn SDL_DestroyWindow(window: *Window) void;
 
 pub const getWindowFullscreenMode = SDL_GetWindowFullscreenMode;
 extern fn SDL_GetWindowFullscreenMode(window: *Window) ?*const DisplayMode;
+
+pub fn getWindowDisplayScale(window: *Window) Error!f32 {
+    const scale = SDL_GetWindowDisplayScale(window);
+    if (scale == 0.0) return makeError();
+    return scale;
+}
+extern fn SDL_GetWindowDisplayScale(window: *Window) f32;
 
 pub fn getWindowPosition(window: *Window, w: ?*c_int, h: ?*c_int) Error!void {
     if (!SDL_GetWindowPosition(window, w, h)) return makeError();
