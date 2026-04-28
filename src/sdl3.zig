@@ -635,8 +635,11 @@ pub const Window = opaque {
     pub const destroy = destroyWindow;
     pub const getFullscreenMode = getWindowFullscreenMode;
     pub const getDisplayScale = getWindowDisplayScale;
+    pub const getSizeInPixels = getWindowSizeInPixels;
     pub const getPosition = getWindowPosition;
     pub const getSize = getWindowSize;
+    pub const setIcon = setWindowIcon;
+    pub const setPosition = setWindowPosition;
     pub const setTitle = setWindowTitle;
 };
 
@@ -695,6 +698,29 @@ pub fn getVideoDriver(index: u16) ?[:0]const u8 {
     return null;
 }
 extern fn SDL_GetVideoDriver(index: c_int) [*c]const u8;
+
+pub const getPrimaryDisplay = SDL_GetPrimaryDisplay;
+extern fn SDL_GetPrimaryDisplay() DisplayId;
+
+pub fn getDisplayUsableBounds(display_id: DisplayId, rect: *Rect) Error!void {
+    if (!SDL_GetDisplayUsableBounds(display_id, rect)) return makeError();
+}
+extern fn SDL_GetDisplayUsableBounds(display_id: DisplayId, rect: *Rect) bool;
+
+pub fn getWindowSizeInPixels(window: *Window, w: ?*c_int, h: ?*c_int) Error!void {
+    if (!SDL_GetWindowSizeInPixels(window, w, h)) return makeError();
+}
+extern fn SDL_GetWindowSizeInPixels(window: *Window, w: ?*c_int, h: ?*c_int) bool;
+
+pub fn setWindowIcon(window: *Window, icon: *Surface) Error!void {
+    if (!SDL_SetWindowIcon(window, icon)) return makeError();
+}
+extern fn SDL_SetWindowIcon(window: *Window, icon: *Surface) bool;
+
+pub fn setWindowPosition(window: *Window, x: c_int, y: c_int) Error!void {
+    if (!SDL_SetWindowPosition(window, x, y)) return makeError();
+}
+extern fn SDL_SetWindowPosition(window: *Window, x: c_int, y: c_int) bool;
 
 pub const gl = struct {
     pub const Context = *anyopaque;
@@ -1532,7 +1558,25 @@ pub const Surface = opaque {
 
 // TODO:
 // - SDL_CreateSurface
-// - SDL_CreateSurfaceFrom
+
+pub fn createSurfaceFrom(
+    width: c_int,
+    height: c_int,
+    format: PixelFormatEnum,
+    pixels: ?*anyopaque,
+    pitch: c_int,
+) Error!*Surface {
+    assert(width > 0);
+    assert(height > 0);
+    return SDL_CreateSurfaceFrom(width, height, format, pixels, pitch) orelse makeError();
+}
+extern fn SDL_CreateSurfaceFrom(
+    width: c_int,
+    height: c_int,
+    format: PixelFormatEnum,
+    pixels: ?*anyopaque,
+    pitch: c_int,
+) ?*Surface;
 
 pub fn destroySurface(surface: *Surface) void {
     SDL_DestroySurface(surface);
@@ -2272,7 +2316,11 @@ extern fn SDL_PollEvent(event: ?*Event) bool;
 
 // TODO
 // - SDL_WaitEvent
-// - SDL_WaitEventTimeout
+
+pub fn waitEventTimeout(event: *Event, timeout_ms: c_int) bool {
+    return SDL_WaitEventTimeout(event, timeout_ms);
+}
+extern fn SDL_WaitEventTimeout(event: *Event, timeoutMS: c_int) bool;
 
 /// You should set the common.timestamp field before passing an event to `pushEvent`.
 /// If the timestamp is 0 it will be filled in with `getTicksNS()`.
@@ -2928,7 +2976,11 @@ extern fn SDL_GetKeyboardState(numkeys: ?*c_int) [*c]const bool;
 // - SDL_GetScancodeFromName
 // - SDL_GetKeyName
 // - SDL_GetKeyFromName
-// - SDL_StartTextInput
+
+pub fn startTextInput(window: *Window) Error!void {
+    if (!SDL_StartTextInput(window)) return makeError();
+}
+extern fn SDL_StartTextInput(window: *Window) bool;
 
 pub const TextInputType = enum(c_int) {
     text,
@@ -2952,13 +3004,19 @@ pub const Capitalization = enum(c_int) {
 // TODO
 // - SDL_StartTextInputWithProperties
 // - SDL_PROP_TEXTINPUT_ constants
-// - SDL_TextInputActive
-// - SDL_StopTextInput
 // - SDL_ClearComposition
 // - SDL_SetTextInputArea
 // - SDL_GetTextInputArea
 // - SDL_HasScreenKeyboardSupport
 // - SDL_ScreenKeyboardShown
+
+pub const textInputActive = SDL_TextInputActive;
+extern fn SDL_TextInputActive(window: *Window) bool;
+
+pub fn stopTextInput(window: *Window) Error!void {
+    if (!SDL_StopTextInput(window)) return makeError();
+}
+extern fn SDL_StopTextInput(window: *Window) bool;
 
 //--------------------------------------------------------------------------------------------------
 //
